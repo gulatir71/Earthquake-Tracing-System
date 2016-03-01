@@ -21,7 +21,7 @@ public abstract class EarthquakeMarker extends SimplePointMarker
 	// using the thresholds below, or a continuous function
 	// based on magnitude. 
 	protected float radius;
-	
+	protected float depth;
 	
 	/** Greater than or equal to this threshold is a moderate earthquake */
 	public static final float THRESHOLD_MODERATE = 5;
@@ -47,9 +47,14 @@ public abstract class EarthquakeMarker extends SimplePointMarker
 		// Add a radius property and then set the properties
 		java.util.HashMap<String, Object> properties = feature.getProperties();
 		float magnitude = Float.parseFloat(properties.get("magnitude").toString());
+		float depth = Float.parseFloat(properties.get("depth").toString());
+		
 		properties.put("radius", 2*magnitude );
+		properties.put("depth", depth);
+		
 		setProperties(properties);
 		this.radius = 1.75f*getMagnitude();
+		this.depth = getDepth();
 	}
 	
 
@@ -77,6 +82,9 @@ public abstract class EarthquakeMarker extends SimplePointMarker
 	// You might find the getters below helpful.
 	private void colorDetermine(PGraphics pg) {
 		//TODO: Implement this method
+		if (depth < 70) pg.fill(255, 255, 0);
+		if (depth < 300 && depth >= 70) pg.fill(0, 0, 255);
+		if (depth >= 300) pg.fill(255, 0, 0);
 	}
 	
 	
