@@ -146,6 +146,12 @@ public class EarthquakeCityMap extends PApplet {
 	private void selectMarkerIfHover(List<Marker> markers)
 	{
 		// TODO: Implement this method
+			for (Marker marker: markers) {
+				if (marker.isInside(map, mouseX, mouseY) && lastSelected == null) {
+					lastSelected = (CommonMarker) marker;
+					marker.setSelected(true);
+				}
+			}
 	}
 	
 	/** The event handler for mouse clicks
@@ -159,8 +165,46 @@ public class EarthquakeCityMap extends PApplet {
 		// TODO: Implement this method
 		// Hint: You probably want a helper method or two to keep this code
 		// from getting too long/disorganized
+		if (lastClicked != null) {
+			unhideMarkers();
+			lastClicked = null;
+		}
+		else {
+			selectMarkerIfClicked(quakeMarkers);
+			selectMarkerIfClicked(cityMarkers);
+		}
 	}
 	
+	private void selectMarkerIfClicked(List<Marker> markers)
+	{
+		for (Marker marker: markers) {
+			if (marker.isInside(map, mouseX, mouseY) && lastClicked == null) {
+				lastClicked = (CommonMarker) marker;
+				((CommonMarker) marker).setClicked(true);
+			}
+		}
+		if (lastClicked instanceof CityMarker) {
+			for (Marker markerCity: cityMarkers) {
+				if (!markerCity.isSelected()) markerCity.setHidden(true);
+			}
+			for (Marker markerQuake: quakeMarkers) {
+				if (!checkDistance(lastClicked, markerQuake)) markerQuake.setHidden(true);
+			}
+		}
+		if (lastClicked instanceof EarthquakeMarker) {
+			for (Marker markerQuake: quakeMarkers) {
+				if (!markerQuake.isSelected()) markerQuake.setHidden(true);
+			}
+			for (Marker markerCity: cityMarkers) {
+				if (!checkDistance(markerCity, lastClicked)) markerCity.setHidden(true);
+			}
+		}		
+	}
+	
+	private boolean checkDistance(Marker checkCity, Marker checkEarthquake) {
+		if (checkEarthquake.getDistanceTo(checkCity.getLocation()) > ((EarthquakeMarker) checkEarthquake).threatCircle()) return false;
+		return true;
+	}
 	
 	// loop over and unhide all markers
 	private void unhideMarkers() {
@@ -172,7 +216,7 @@ public class EarthquakeCityMap extends PApplet {
 			marker.setHidden(false);
 		}
 	}
-	
+		
 	// helper method to draw key in GUI
 	private void addKey() {	
 		// Remember you can use Processing's graphics methods here
