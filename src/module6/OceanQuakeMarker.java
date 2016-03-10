@@ -26,7 +26,8 @@ public class OceanQuakeMarker extends EarthquakeMarker {
 		// Simply draw a centered square.
 		// HINT: Notice the radius variable in the EarthquakeMarker class
 		// and how it is set in the EarthquakeMarker constructor
-		pg.rect(x-radius, y-radius, 2*radius, 2*radius);
+		//pg.rect(x-radius, y-radius, 2*radius, 2*radius);
+		pg.image(EarthquakeCityMap.oceanquakeImage, x-10, y-10, 30, 30);
 	}
 	
 

@@ -2,6 +2,7 @@ package module6;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 
 import de.fhpotsdam.unfolding.UnfoldingMap;
@@ -17,6 +18,7 @@ import de.fhpotsdam.unfolding.providers.MBTilesMapProvider;
 import de.fhpotsdam.unfolding.utils.MapUtils;
 import parsing.ParseFeed;
 import processing.core.PApplet;
+import processing.core.PImage;
 
 /** EarthquakeCityMap
  * An application with an interactive map displaying earthquake data.
@@ -41,7 +43,9 @@ public class EarthquakeCityMap extends PApplet {
 	/** This is where to find the local tiles, for working without an Internet connection */
 	public static String mbTilesString = "blankLight-1-3.mbtiles";
 	
-	
+	public static PImage cityImage;
+	public static PImage earthquakeImage;
+	public static PImage oceanquakeImage;
 
 	//feed with magnitude 2.5+ Earthquakes
 	private String earthquakesURL = "http://earthquake.usgs.gov/earthquakes/feed/v1.0/summary/2.5_week.atom";
@@ -87,6 +91,9 @@ public class EarthquakeCityMap extends PApplet {
 		// Uncomment this line to take the quiz
 		//earthquakesURL = "quiz2.atom";
 		
+		cityImage = this.loadImage("city.gif");
+		earthquakeImage = this.loadImage("red_fire.gif");
+		oceanquakeImage = this.loadImage("blue_fire.gif");
 		
 		// (2) Reading in earthquake data and geometric properties
 	    //     STEP 1: load country features and markers
@@ -117,6 +124,7 @@ public class EarthquakeCityMap extends PApplet {
 
 	    // could be used for debugging
 	    printQuakes();
+	    sortAndPrint(20);
 	 		
 	    // (3) Add markers to map
 	    //     NOTE: Country markers are not added to the map.  They are used
@@ -139,6 +147,16 @@ public class EarthquakeCityMap extends PApplet {
 	// TODO: Add the method:
 	//   private void sortAndPrint(int numToPrint)
 	// and then call that method from setUp
+	
+	private void sortAndPrint(int numToPrint) {
+		Collections.sort(quakeMarkers, Collections.reverseOrder());
+		Marker[] quakeArray = quakeMarkers.toArray(new Marker[quakeMarkers.size()]);
+		int toPrint;
+		if (numToPrint >= quakeMarkers.size()) toPrint = quakeMarkers.size();
+		else toPrint = numToPrint;
+		for (int i=0; i<toPrint; i++) System.out.println(quakeArray[i]);
+		
+	}
 	
 	/** Event handler that gets called automatically when the 
 	 * mouse moves.
