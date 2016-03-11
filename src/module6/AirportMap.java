@@ -5,15 +5,21 @@ import java.util.HashMap;
 import java.util.List;
 
 import de.fhpotsdam.unfolding.UnfoldingMap;
+import de.fhpotsdam.unfolding.data.Feature;
+import de.fhpotsdam.unfolding.data.GeoJSONReader;
 import de.fhpotsdam.unfolding.data.PointFeature;
 import de.fhpotsdam.unfolding.data.ShapeFeature;
+import de.fhpotsdam.unfolding.marker.AbstractShapeMarker;
 import de.fhpotsdam.unfolding.marker.Marker;
+import de.fhpotsdam.unfolding.marker.MultiMarker;
 import de.fhpotsdam.unfolding.marker.SimpleLinesMarker;
 import de.fhpotsdam.unfolding.marker.SimplePointMarker;
+import de.fhpotsdam.unfolding.providers.Google;
 import de.fhpotsdam.unfolding.utils.MapUtils;
 import de.fhpotsdam.unfolding.geo.Location;
 import parsing.ParseFeed;
 import processing.core.PApplet;
+import processing.core.PImage;
 
 /** An applet that shows airports (and routes)
  * on a world map.  
@@ -26,14 +32,28 @@ public class AirportMap extends PApplet {
 	UnfoldingMap map;
 	private List<Marker> airportList;
 	List<Marker> routeList;
+	public static PImage airImage;
+	
+	private CommonMarker lastSelected;
+	private CommonMarker lastClicked;
+	
+	// A List of country markers
+	private List<Marker> countryMarkers;
+	private String countryFile = "countries.geo.json";
 	
 	public void setup() {
 		// setting up PAppler
 		size(800,600, OPENGL);
 		
 		// setting up map and default events
-		map = new UnfoldingMap(this, 50, 50, 750, 550);
+		map = new UnfoldingMap(this, 50, 50, 700, 500, new Google.GoogleMapProvider());
 		MapUtils.createDefaultEventDispatcher(this, map);
+		map.zoomToLevel(5);
+		
+		List<Feature> countries = GeoJSONReader.loadData(this, countryFile);
+		countryMarkers = MapUtils.createSimpleMarkers(countries);
+		
+		airImage = this.loadImage("airport.jpg");
 		
 		// get features from airport data
 		List<PointFeature> features = ParseFeed.parseAirports(this, "airports.dat");
@@ -47,11 +67,11 @@ public class AirportMap extends PApplet {
 			AirportMarker m = new AirportMarker(feature);
 	
 			m.setRadius(5);
-			airportList.add(m);
+			if (isLand(feature)) airportList.add(m);
 			
 			// put airport in hashmap with OpenFlights unique id for key
 			airports.put(Integer.parseInt(feature.getId()), feature.getLocation());
-		
+			
 		}
 		
 		
@@ -88,10 +108,84 @@ public class AirportMap extends PApplet {
 	}
 	
 	public void draw() {
-		background(0);
+		background(255, 255, 255);
 		map.draw();
 		
 	}
 	
+	@Override
+	public void mouseMoved()
+	{
+		// clear the last selection
+		if (lastSelected != null) {
+			lastSelected.setSelected(false);
+			lastSelected = null;
+		
+		}
+		selectMarkerIfHover(airportList);
+		//loop();
+	}
+	
+	// If there is a marker selected 
+	private void selectMarkerIfHover(List<Marker> markers)
+	{
+		// Abort if there's already a marker selected
+		if (lastSelected != null) {
+			return;
+		}
+		
+		for (Marker m : markers) 
+		{
+			CommonMarker marker = (CommonMarker)m;
+			if (marker.isInside(map,  mouseX, mouseY)) {
+				lastSelected = marker;
+				marker.setSelected(true);
+				return;
+			}
+		}
+	}
+	
+	private boolean isInCountry(PointFeature airport, Marker country) {
+		// getting location of feature
+		Location checkLoc = airport.getLocation();
 
+		// some countries represented it as MultiMarker
+		// looping over SimplePolygonMarkers which make them up to use isInsideByLoc
+		if(country.getClass() == MultiMarker.class) {
+				
+			// looping over markers making up MultiMarker
+			for(Marker marker : ((MultiMarker)country).getMarkers()) {
+					
+				// checking if inside
+				if(((AbstractShapeMarker)marker).isInsideByLocation(checkLoc)) {
+					airport.addProperty("country", country.getProperty("name"));
+						
+					// return if is inside one
+					return true;
+				}
+			}
+		}
+			
+		// check if inside country represented by SimplePolygonMarker
+		else if(((AbstractShapeMarker)country).isInsideByLocation(checkLoc)) {
+			airport.addProperty("country", country.getProperty("name"));
+			
+			return true;
+		}
+		return false;
+	}
+	
+	private boolean isLand(PointFeature airport) {
+		
+		// IMPLEMENT THIS: loop over all countries to check if location is in any of them
+		// If it is, add 1 to the entry in countryQuakes corresponding to this country.
+		for (Marker country : countryMarkers) {
+			if (isInCountry(airport, country)) {
+				return true;
+			}
+		}
+		
+		// not inside any country
+		return false;
+	}
 }

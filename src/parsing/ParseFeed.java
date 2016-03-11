@@ -172,9 +172,7 @@ public class ParseFeed {
 				point.putProperty("code", columns[4]);
 			}
 			// get airport ICAO code if no IATA
-			else if(!columns[5].equals("")) {
-				point.putProperty("code", columns[5]);
-			}
+			else point.putProperty("code", columns[5]);
 			
 			point.putProperty("altitude", columns[8 + i]);
 			
